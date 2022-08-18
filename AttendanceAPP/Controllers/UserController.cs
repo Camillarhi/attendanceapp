@@ -51,6 +51,35 @@ namespace AttendanceAPP.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet("search/{user?}")]
+        public async Task<IActionResult> SearchUsers(string? user )
+        {
+            try
+            {
+                if (user == null)
+                {
+                    var users = await _unitOfWork.Users.GetAll();
+                    var results = _mapper.Map<IList<UserDTO>>(users);
+                    return Ok(results);
+                }
+                else
+                {
+                    var users = await _unitOfWork.Users.GetAll(x => x.FirstName.ToUpper().Contains(user.ToUpper())
+                || x.LastName.ToUpper().Contains(user.ToUpper())
+                || (x.FirstName + " " + x.LastName).ToUpper().Contains(user.ToUpper()));
+                    var results = _mapper.Map<IList<UserDTO>>(users);
+                    return Ok(results);
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Something went wrong");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserCreateDTO userDTO)
         {
